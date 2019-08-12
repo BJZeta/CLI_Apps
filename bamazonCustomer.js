@@ -20,22 +20,35 @@ connection.connect(function (err) {
 });
 
 function runCustomer() {
-    connection.query("SELECT * FROM products",function (err, results) {
+    connection.query("SELECT * FROM products", function (err, results) {
         if (err) throw err;
-        inquirer.prompt({
-            name: "choices",
-            type: "rawlist",
-            message: "What would you like to purchase?",
-            choices: function () {
-                var choiceArray = [];
-                for (var i = 0; i < results.length; i++) {
-                    choiceArray.push(results[i].product_name);
+        inquirer.prompt([
+            {
+                name: "choices",
+                type: "rawlist",
+                message: "What would you like to purchase?",
+                choices: function () {
+                    var choiceArray = [];
+                    for (var i = 0; i < results.length; i++) {
+                        choiceArray.push(results[i].product_name);
+                    }
+                    return choiceArray;
                 }
-                return choiceArray;
+            },
+            {
+                name: "price",
+                type: "number",
+                message: "How many would you like to purchase?"
             }
-        }).then(function (answer) {
-            console.log('this works');
-            console.log(answer);
+        ]).then(function (answer) {
+            var query = "SELECT * FROM products WHERE ?";
+            connection.query(query, { product_name: answer.choices }, function (err,results) {
+                if(answer.price <= results[0].stock_quantity) {
+                    console.log("You Got it");
+                } else {
+                    console.log("nah fam");
+                }
+            })
         })
     })
 }
