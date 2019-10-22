@@ -42,11 +42,25 @@ function runCustomer() {
             }
         ]).then(function (answer) {
             var query = "SELECT * FROM products WHERE ?";
-            connection.query(query, { product_name: answer.choices }, function (err,results) {
-                if(answer.price <= results[0].stock_quantity) {
-                    console.log("You Got it");
+            connection.query(query, [{ product_name: answer.choices }], function (err,results) {
+                if(answer.price <= results[0].stock_quantity || results[0].stock_quantity === 0) {
+                    var newQty = results[0].stock_quantity - answer.price;
+                    connection.query("UPDATE products SET ? WHERE ?", [
+                        { stock_quantity : newQty },
+                        { product_name : results[0].product_name }
+                    ], function (err,res) {
+                        console.log("Thank you for your purchase :)\n");
+                        console.log("---------------------------\n");
+                        console.log('We have ' + results[0].stock_quantity + '  left :)');
+                        setTimeout(function () {
+                            runCustomer();
+                        }, 3000)
+                    })
                 } else {
-                    console.log("nah fam");
+                    console.log("nah fam, I checked the back and we OUT");
+                    setTimeout(function() {
+                        runCustomer();
+                    },3000);
                 }
             })
         })
